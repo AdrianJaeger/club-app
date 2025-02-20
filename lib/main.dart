@@ -41,15 +41,6 @@ class _MyHomePageState extends State<MyHomePage> {
     _loadClubs();
   }
 
-  // add a new club to db
-  void _newClub() async {
-    final name = await _showAddClubDialog();
-    if (name != null && name.isNotEmpty) {
-      await DatabaseHelper.instance.addClub(name);
-      _loadClubs();
-    }
-  }
-  
   // load clubs in database to show them in list on screen
   void _loadClubs() async {
     final clubs = await DatabaseHelper.instance.getClubs();
@@ -58,8 +49,17 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  // 
-  Future<String?> _showAddClubDialog() async {
+  // add a new club to db
+  void _newClub() async {
+    final name = await _addClubDialog();
+    if (name != null && name.isNotEmpty) {
+      await DatabaseHelper.instance.addClub(name);
+      _loadClubs();
+    }
+  }
+
+  // Dialog for adding clubs
+  Future<String?> _addClubDialog() async {
     String? clubName;
     return showDialog<String>(
       context: context,
@@ -86,6 +86,40 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  // show a dialog to confirm the deletion of a club
+  Future<void> _removeClubDialog(Map<String, dynamic> club) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete club'),
+          content: Text('Are you sure you want to delete ${club['name']}?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // close dialog
+                HapticFeedback.mediumImpact();
+              }
+            ),
+            TextButton(
+              child: const Text('Delete'),
+              onPressed: () async {
+                HapticFeedback.mediumImpact();
+                // delete club from db
+                await DatabaseHelper.instance.deleteClub(club['id']);
+                // update the clubs list
+                _loadClubs();
+                Navigator.of(context).pop(); // close dialog
+              }
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -101,13 +135,21 @@ class _MyHomePageState extends State<MyHomePage> {
               itemCount: _clubs.length,
               itemBuilder: (context, index) {
                 final club = _clubs[index];
-                return GestureDetector(
-                  // onTap: () => _openClub(club),
-                  // onLongPress: () => _removeClubDialog(club),
-                  child:
-                    ListTile(
-                    title: Text(_clubs[index]['name']),
-                  )
+                return Column(
+                  children: [
+                    GestureDetector(
+                      // onTap: () => _openClub(club),
+                      onLongPress: () {
+                        _removeClubDialog(club);
+                        HapticFeedback.mediumImpact();
+                      },
+                      child:
+                        ListTile(
+                        title: Text(_clubs[index]['name']),
+                      ),
+                    ),
+                    const Divider(),
+                  ],
                 );
               },
             ), 
