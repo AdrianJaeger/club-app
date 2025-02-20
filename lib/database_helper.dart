@@ -1,0 +1,63 @@
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+
+class DatabaseHelper {
+  // private constructor
+  DatabaseHelper._init();
+
+  // Singleton-Pattern
+  // this creates the only instance of the database that can get used globally in the whole code
+  // you  can use this in code with DatabaseHelper.instance
+  static final DatabaseHelper instance = DatabaseHelper._init();
+  
+  // static means the variable belongs to the class itself, not to an instance of the class
+  // this way the database stays in the storage and doesnt get opened every single time, a method is called
+  // "?" means _database is either Database or null because we initialize it only later
+  static Database? _database;
+
+  // Future means it returns a database but later because opening it takes some time
+  Future<Database> get database async { // async allows use of await
+    // database already exists, return it
+    if (_database != null) {
+      return _database!;
+    }
+    // database doesnt exist yet, call _initDB to create
+    else {
+      _database = await _initDB('clubs.db'); // await causes that the app doesnt freeze while loading the db
+    return _database!;
+    }
+  }
+
+  Future<Database> _initDB(String fileName) async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, fileName);
+
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: _onCreate,
+    );
+  }
+
+  Future<void> _onCreate(Database db, int version) async {
+    // creates the clubs table with variables id and name
+    await db.execute('''
+      CREATE TABLE clubs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL
+      )
+    ''');
+
+    // creates the members table with variables id, name, age, clubId
+    // and it makes sure to delete all members of a club if that club gets deleted
+    await db.execute('''
+      CREATE TABLE members (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        age INTEGER,
+        clubId INTEGER,
+        FOREIGN KEY (clubId) REFERENCES clubs (id) ON DELETE CASCADE 
+      )
+    ''');
+  }
+}
