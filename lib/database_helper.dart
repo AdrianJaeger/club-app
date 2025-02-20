@@ -60,4 +60,20 @@ class DatabaseHelper {
       )
     ''');
   }
+
+  // get all existing clubs from db
+  Future<List<Map<String, dynamic>>> getClubs() async {
+    final db = await database;
+    return await db.query('clubs');
+  }
+
+  // add a new club to db
+  Future<int> addClub(String name) async {
+    final db = await database;
+    return await db.insert(
+      'clubs',
+      {'name': name},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
 }
