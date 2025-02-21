@@ -51,34 +51,71 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // add a new club to db
   void _newClub() async {
-    final name = await _addClubDialog();
-    if (name != null && name.isNotEmpty) {
-      await DatabaseHelper.instance.addClub(name);
+    final clubData = await _createClubDialog();
+    if (clubData != null && clubData['name']!.isNotEmpty) {
+      int id = await DatabaseHelper.instance.addClub(
+        clubData['name']!, 
+        clubData['city']!,
+        clubData['year']!,
+      );
+      debugPrint('New club added with ID: $id');
       _loadClubs();
     }
   }
 
   // Dialog for adding clubs
-  Future<String?> _addClubDialog() async {
+  Future<Map<String, String>?> _createClubDialog() async {
     String? clubName;
-    return showDialog<String>(
+    String? clubCity;
+    String? clubYear;
+
+    return showDialog<Map<String, String>>(
       context: context,
       builder:(context) {
         return AlertDialog(
-          title: const Text('Add new club'),
-          content:TextField(
-            onChanged: (value) {
-              clubName = value;
-            },
-            decoration: const InputDecoration(hintText: 'Club name'),
+          title: const Text('Create a new club'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                onChanged: (value) {
+                  clubName = value;
+                },
+                decoration: const InputDecoration(hintText: 'Club name'),
+                keyboardType: TextInputType.text,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              TextField(
+                onChanged: (value) {
+                  clubCity = value;
+                },
+                decoration: const InputDecoration(hintText: 'City of club'),
+                keyboardType: TextInputType.text,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              TextField(
+                onChanged: (value) {
+                  clubYear = value;
+                },
+                decoration: const InputDecoration(hintText: 'Founding year of club'),
+                keyboardType: TextInputType.number,
+              ),
+            ],
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                HapticFeedback.mediumImpact();
-                Navigator.of(context).pop(clubName);
+                if (clubName != null && clubName!.isNotEmpty && 
+                    clubCity != null && clubCity!.isNotEmpty) {
+                  HapticFeedback.mediumImpact();
+                  Navigator.of(context).pop({
+                    'name': clubName ?? '',
+                    'city': clubCity ?? '',
+                    'year': clubYear ?? '',
+                });
+                }
               },
-              child: const Text('Add'),
+              child: const Text('Create'),
             ),
           ],
         );

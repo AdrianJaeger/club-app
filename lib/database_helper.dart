@@ -34,8 +34,9 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 3,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -44,7 +45,9 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE clubs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL
+        name TEXT NOT NULL,
+        city TEXT NOT NULL,
+        year TEXT NOT NULL
       )
     ''');
 
@@ -61,6 +64,13 @@ class DatabaseHelper {
     ''');
   }
 
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 3) {
+      await db.execute("ALTER TABLE clubs ADD COLUMN year TEXT NOT NULL DEFAULT 'Unknown'");
+    }
+  }
+
+
   // get all existing clubs from db
   Future<List<Map<String, dynamic>>> getClubs() async {
     final db = await database;
@@ -68,11 +78,13 @@ class DatabaseHelper {
   }
 
   // add a new club to db
-  Future<int> addClub(String name) async {
+  Future<int> addClub(String name, String city, String year) async {
     final db = await database;
     return await db.insert(
       'clubs',
-      {'name': name},
+      {'name': name,
+       'city': city,
+       'year': year},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
