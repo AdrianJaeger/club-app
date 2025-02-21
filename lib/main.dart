@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'database_helper.dart'; // import of database class
+import 'database_helper.dart';
+import 'club_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +15,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Club Administration',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 80, 156, 255)),
         useMaterial3: true,
       ),
       home: const MyHomePage(title: 'Clubs'),
@@ -161,8 +162,12 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        backgroundColor: Colors.blue[900],
+        title: Text(
+            widget.title,
+            style: TextStyle(color: Colors.white)
+        ),
+        centerTitle: true,
       ),
       // list with all existing clubs
       body: Center(
@@ -175,7 +180,15 @@ class _MyHomePageState extends State<MyHomePage> {
                 return Column(
                   children: [
                     GestureDetector(
-                      // onTap: () => _openClub(club),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ClubPage(club: club),
+                          )
+                        );
+                        HapticFeedback.mediumImpact();
+                      },
                       onLongPress: () {
                         _removeClubDialog(club);
                         HapticFeedback.mediumImpact();
