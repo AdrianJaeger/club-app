@@ -58,6 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
         clubData['name']!, 
         clubData['city']!,
         clubData['year']!,
+        clubData['description']!,
       );
       debugPrint('New club added with ID: $id');
       _loadClubs();
@@ -69,50 +70,65 @@ class _MyHomePageState extends State<MyHomePage> {
     String? clubName;
     String? clubCity;
     String? clubYear;
+    String? clubDescription;
 
     return showDialog<Map<String, String>>(
       context: context,
       builder:(context) {
         return AlertDialog(
           title: const Text('Create a new club'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                onChanged: (value) {
-                  clubName = value;
-                },
-                decoration: const InputDecoration(hintText: 'Club name'),
-                keyboardType: TextInputType.text,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              TextField(
-                onChanged: (value) {
-                  clubCity = value;
-                },
-                decoration: const InputDecoration(hintText: 'City of club'),
-                keyboardType: TextInputType.text,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              TextField(
-                onChanged: (value) {
-                  clubYear = value;
-                },
-                decoration: const InputDecoration(hintText: 'Founding year of club'),
-                keyboardType: TextInputType.number,
-              ),
-            ],
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  onChanged: (value) {
+                    clubName = value;
+                  },
+                  decoration: const InputDecoration(hintText: 'Club name'),
+                  keyboardType: TextInputType.text,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                TextField(
+                  onChanged: (value) {
+                    clubCity = value;
+                  },
+                  decoration: const InputDecoration(hintText: 'City of club'),
+                  keyboardType: TextInputType.text,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                TextField(
+                  onChanged: (value) {
+                    clubYear = value;
+                  },
+                  decoration: const InputDecoration(hintText: 'Founding year of club'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  onChanged: (value) {
+                    clubDescription = value;
+                  },
+                  decoration: const InputDecoration(hintText: 'Description, optional'),
+                  textCapitalization: TextCapitalization.sentences,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
+                  maxLines: null,
+                ),
+              ],
+            ),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 if (clubName != null && clubName!.isNotEmpty && 
-                    clubCity != null && clubCity!.isNotEmpty) {
+                    clubCity != null && clubCity!.isNotEmpty &&
+                    clubYear != null && clubYear!.isNotEmpty) {
                   HapticFeedback.mediumImpact();
                   Navigator.of(context).pop({
                     'name': clubName ?? '',
                     'city': clubCity ?? '',
                     'year': clubYear ?? '',
+                    'description': clubDescription ?? '',
                 });
                 }
               },
@@ -156,7 +172,6 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
