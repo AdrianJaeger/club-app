@@ -47,8 +47,7 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         city TEXT NOT NULL,
-        year TEXT NOT NULL,
-        description TEXT
+        year TEXT NOT NULL
       )
     ''');
 
@@ -67,9 +66,10 @@ class DatabaseHelper {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 3) {
-      await db.execute("ALTER TABLE clubs ADD COLUMN description TEXT");
+      await db.execute("ALTER TABLE clubs ADD COLUMN year TEXT NOT NULL DEFAULT 'Unknown'");
     }
   }
+
 
   // get all existing clubs from db
   Future<List<Map<String, dynamic>>> getClubs() async {
@@ -78,15 +78,13 @@ class DatabaseHelper {
   }
 
   // add a new club to db
-  Future<int> addClub(String name, String city, String year, String? description) async {
+  Future<int> addClub(String name, String city, String year) async {
     final db = await database;
     return await db.insert(
       'clubs',
       {'name': name,
        'city': city,
-       'year': year,
-       'description' : description
-       },
+       'year': year},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -98,26 +96,6 @@ class DatabaseHelper {
       'clubs',
       where: 'id = ?',
       whereArgs: [id],
-    );
-  }
-
-  // get all members of a specific club
-  Future<List<Map<String, dynamic>>> getMembers(int clubId) async {
-    final db = await database;
-    return await db.query(
-      'members',
-      where: 'clubId = ?',
-      whereArgs: [clubId],
-    );
-  }
-
-  // add a new member to db
-  Future<int> addMember(String name, int age, int clubId) async {
-    final db = await database;
-    return await db.insert(
-      'members',
-      {'name': name, 'age': age, 'clubId': clubId},
-      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 }

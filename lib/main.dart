@@ -54,12 +54,12 @@ class _MyHomePageState extends State<MyHomePage> {
   void _newClub() async {
     final clubData = await _createClubDialog();
     if (clubData != null && clubData['name']!.isNotEmpty) {
-      await DatabaseHelper.instance.addClub(
+      int id = await DatabaseHelper.instance.addClub(
         clubData['name']!, 
         clubData['city']!,
         clubData['year']!,
-        clubData['description']!
       );
+      debugPrint('New club added with ID: $id');
       _loadClubs();
     }
   }
@@ -69,15 +69,13 @@ class _MyHomePageState extends State<MyHomePage> {
     String? clubName;
     String? clubCity;
     String? clubYear;
-    String? clubDescription;
 
     return showDialog<Map<String, String>>(
       context: context,
       builder:(context) {
         return AlertDialog(
           title: const Text('Create a new club'),
-          content: SingleChildScrollView(
-            child: Column(
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
@@ -103,29 +101,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 decoration: const InputDecoration(hintText: 'Founding year of club'),
                 keyboardType: TextInputType.number,
               ),
-              TextField(
-                onChanged: (value) {
-                  clubDescription = value;
-                },
-                decoration: const InputDecoration(hintText: 'Description, optional'),
-                textCapitalization: TextCapitalization.sentences,
-                keyboardType: TextInputType.multiline,
-                textInputAction: TextInputAction.newline,
-                maxLines: null,
-              ),
             ],
-          ),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                if (clubName != null && clubCity != null) {
+                if (clubName != null && clubName!.isNotEmpty && 
+                    clubCity != null && clubCity!.isNotEmpty) {
                   HapticFeedback.mediumImpact();
                   Navigator.of(context).pop({
                     'name': clubName ?? '',
                     'city': clubCity ?? '',
                     'year': clubYear ?? '',
-                    'description': clubDescription ?? '',
                 });
                 }
               },
@@ -169,6 +156,7 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
