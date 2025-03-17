@@ -52,13 +52,13 @@ class DatabaseHelper {
       )
     ''');
 
-    // creates the members table with variables id, name, age, clubId
+    // creates the members table
     // and it makes sure to delete all members of a club if that club gets deleted
     await db.execute('''
       CREATE TABLE members (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        age INTEGER,
+        birthdate INTEGER,
         clubId INTEGER,
         FOREIGN KEY (clubId) REFERENCES clubs (id) ON DELETE CASCADE 
       )
@@ -66,9 +66,11 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    /*
     if (oldVersion < 2) {
       await db.execute("ALTER TABLE clubs ADD COLUMN description TEXT");
     }
+    */
   }
 
   // get all existing clubs from db
@@ -112,11 +114,13 @@ class DatabaseHelper {
   }
 
   // add a new member to db
-  Future<int> addMember(String name, int age, int clubId) async {
+  Future<int> addMember(String name, String birthdate, int clubId) async {
     final db = await database;
     return await db.insert(
       'members',
-      {'name': name, 'age': age, 'clubId': clubId},
+      {'name': name, 
+      'birthdate': birthdate,
+      'clubId': clubId},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }

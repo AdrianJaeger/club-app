@@ -36,7 +36,7 @@ class _ClubPageState extends State<ClubPage> {
     if (memberData != null && memberData['name']!.isNotEmpty) {
       await DatabaseHelper.instance.addMember(
         memberData['name']!,
-        int.parse(memberData['age']!),
+        memberData['birthdate']!,
         widget.club['id'],
       );
       _loadMembers();
@@ -45,7 +45,24 @@ class _ClubPageState extends State<ClubPage> {
 
   Future<Map<String, String>?> _createMemberDialog() async {
     String? memberName;
-    String? memberAge;
+    String? memberBirthdate;
+    TextEditingController dateController = TextEditingController();
+
+    Future<void> selectDate(BuildContext context) async {
+      DateTime? pickedDate = await showDatePicker(
+        context: context,
+        initialDate: DateTime(2000),
+        firstDate: DateTime(1900),
+        lastDate: DateTime.now(),
+      );
+
+      if (pickedDate != null) {
+        setState(() {
+          memberBirthdate = pickedDate.toIso8601String().split('T')[0]; //YYYY-MM-DD ;
+          dateController.text = memberBirthdate!;
+        });
+      }
+    }
 
     return showDialog<Map<String, String>>(
       context: context,
@@ -65,22 +82,21 @@ class _ClubPageState extends State<ClubPage> {
                 textCapitalization: TextCapitalization.sentences,
               ),
               TextField(
-                onChanged: (value) {
-                  memberAge = value;
-                },
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(hintText: 'Age'),
+                controller: dateController,
+                decoration: const InputDecoration(hintText: 'Birthdate'),
+                readOnly: true,
+                onTap: () => selectDate(context),
               ),
             ],
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                if (memberName != null && memberAge != null) {
+                if (memberName != null && memberBirthdate != null) {
                   HapticFeedback.mediumImpact();
                   Navigator.of(context).pop({
                     'name': memberName!, 
-                    'age': memberAge!
+                    'birthdate': memberBirthdate!
                   });
                 }
               },
@@ -125,6 +141,20 @@ class _ClubPageState extends State<ClubPage> {
     );
   }
 
+  int _calculateAge(String birthdateString) {
+    DateTime todayDate = DateTime.now();
+    DateTime birthDate = DateTime.parse(birthdateString);
+    int age = todayDate.year - birthDate.year;
+
+    if (todayDate.month < birthDate.month || 
+        todayDate.month == birthDate.month && todayDate.day < birthDate.day) 
+    {
+      age--;
+    }
+
+    return age;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -166,7 +196,7 @@ class _ClubPageState extends State<ClubPage> {
                         child:
                           ListTile(
                             title: Text(member['name']),
-                            subtitle: Text('Age: ${member['age']}'),
+                            subtitle: Text('Age: ${_calculateAge(member['birthdate'])} years'),
                           ),
                       ),
                       const Divider(),
