@@ -92,6 +92,39 @@ class _ClubPageState extends State<ClubPage> {
     );
   }
 
+  // show a dialog to confirm to remove a member
+  Future<void> _removeMemberDialog(Map<String, dynamic> member) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Remove member'),
+          content: Text('Are you sure you want to remove ${member['name']}?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // close dialog
+                HapticFeedback.mediumImpact();
+              }
+            ),
+            TextButton(
+              child: const Text('Remove'),
+              onPressed: () async {
+                HapticFeedback.mediumImpact();
+                // delete member from db
+                await DatabaseHelper.instance.deleteMember(member['id']);
+                // update the members list
+                _loadMembers();
+                Navigator.of(context).pop(); // close dialog
+              }
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,6 +141,7 @@ class _ClubPageState extends State<ClubPage> {
             Text('📅 Founded: ${widget.club['year']}', style: const TextStyle(fontSize: 18)),
             const SizedBox(height: 8),
             Text('👥 Members: $_memberCount', style: const TextStyle(fontSize: 18)),
+            // show only if there is a description
             if (widget.club['description'].isNotEmpty) ... [
               const SizedBox(height: 8),
               Text('Description: \n${widget.club['description']}', style: const TextStyle(fontSize: 18)),
@@ -116,13 +150,27 @@ class _ClubPageState extends State<ClubPage> {
             const Text('Member List:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Expanded(
-              child: ListView.builder(
-                itemCount: _members.length,
+              child: _members.isEmpty
+              ? const Text('Club has no members yet')
+              : ListView.builder(
+              itemCount: _members.length,
                 itemBuilder: (context, index) {
                   final member = _members[index];
-                  return ListTile(
-                    title: Text(member['name']),
-                    subtitle: Text('Age: ${member['age']}'),
+                  return Column(
+                    children: [
+                      GestureDetector(
+                        onLongPress: () {
+                          _removeMemberDialog(member);
+                          HapticFeedback.mediumImpact();
+                        },
+                        child:
+                          ListTile(
+                            title: Text(member['name']),
+                            subtitle: Text('Age: ${member['age']}'),
+                          ),
+                      ),
+                      const Divider(),
+                    ],
                   );
                 },
               ),

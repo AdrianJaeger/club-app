@@ -120,4 +120,14 @@ class DatabaseHelper {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
+
+  // delete a member from db
+  Future<int> deleteMember(int id) async {
+    final db = await database;
+    return await db.delete(
+      'members',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
 }
