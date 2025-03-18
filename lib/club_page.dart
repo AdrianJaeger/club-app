@@ -10,10 +10,34 @@ class ClubPage extends StatefulWidget {
   State<ClubPage> createState() => _ClubPageState();
 }
 
+// possibilities how to sort the members
+enum SortOption {nameAToZ, nameZToA, ageYoungToOld, ageOldToYoung, addedLastToFirst, addedFirstToLast}
+
+extension SortOptionExtension on SortOption {
+  String get displayName {
+    switch(this) {
+      case SortOption.nameAToZ:
+        return 'Last name, A to Z';
+      case SortOption.nameZToA:
+        return 'Last name, Z to A';
+      case SortOption.ageYoungToOld:
+        return 'Age, ascending';
+      case SortOption.ageOldToYoung:
+        return 'Age, descending';
+      case SortOption.addedLastToFirst:
+        return 'Added to club, last to first';
+      case SortOption.addedFirstToLast:
+        return 'Added to club, first to last';
+      
+    }
+  }
+}
+
 class _ClubPageState extends State<ClubPage> {
   // variables
   List<Map<String, dynamic>> _members = [];
   int _memberCount = 0;
+  SortOption _currentSortOption = SortOption.addedFirstToLast;
 
   @override
   void initState() {
@@ -27,6 +51,30 @@ class _ClubPageState extends State<ClubPage> {
     setState(() {
       _members = members;
       _memberCount = members.length;
+    });
+    _sortMembers();
+  }
+
+  void _sortMembers() {
+    setState(() {
+      _members = List<Map<String, dynamic>>.from(_members);
+
+      _members.sort((a,b) {
+        switch (_currentSortOption) {
+          case SortOption.nameAToZ:
+            return a['name'].compareTo(b['name']);
+          case SortOption.nameZToA:
+            return b['name'].compareTo(a['name']);
+          case SortOption.ageYoungToOld:
+            return b['birthdate'].compareTo(a['birthdate']);
+          case SortOption.ageOldToYoung:
+            return a['birthdate'].compareTo(b['birthdate']);
+          case SortOption.addedLastToFirst:
+            return b['id'].compareTo(a['id']);
+          case SortOption.addedFirstToLast:
+            return a['id'].compareTo(b['id']);
+        }
+      });
     });
   }
 
@@ -141,6 +189,56 @@ class _ClubPageState extends State<ClubPage> {
     );
   }
 
+  Future<void> _sortMemberDialog() async {
+    SortOption selectedOption = _currentSortOption;
+
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Sort Members'),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState){
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: SortOption.values.map((option){
+                  return RadioListTile<SortOption>(
+                    title: Text(option.displayName),
+                    value: option, 
+                    groupValue: selectedOption, 
+                    onChanged: (value) {
+                      setState((){
+                        selectedOption = value!;
+                      });
+                    },
+                  );
+                }).toList(),
+              );
+            }
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                Navigator.of(context).pop();
+              }, 
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _currentSortOption = selectedOption;
+                _sortMembers();
+                HapticFeedback.mediumImpact();
+                Navigator.of(context).pop();
+              }, 
+              child: const Text('OK'),
+            )
+          ]
+        );
+      },
+    );
+  }
+
   int _calculateAge(String birthdateString) {
     DateTime todayDate = DateTime.now();
     DateTime birthDate = DateTime.parse(birthdateString);
@@ -185,10 +283,21 @@ class _ClubPageState extends State<ClubPage> {
             // show only if there is a description
             if (widget.club['description'].isNotEmpty) ... [
               const SizedBox(height: 8),
-              Text('Description: \n${widget.club['description']}', style: const TextStyle(fontSize: 18)),
+              Text('📝 Description: \n${widget.club['description']}', style: const TextStyle(fontSize: 18)),
             ],            
             const SizedBox(height: 16),
-            const Text('Member List:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Member List:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: const Icon(Icons.sort),
+                  onPressed: () {
+                    _sortMemberDialog();
+                  }, 
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             Expanded(
               child: _members.isEmpty
