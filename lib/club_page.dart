@@ -62,9 +62,9 @@ class _ClubPageState extends State<ClubPage> {
       _members.sort((a,b) {
         switch (_currentSortOption) {
           case SortOption.nameAToZ:
-            return a['name'].compareTo(b['name']);
+            return a['lastname'].compareTo(b['lastname']);
           case SortOption.nameZToA:
-            return b['name'].compareTo(a['name']);
+            return b['lastname'].compareTo(a['lastname']);
           case SortOption.ageYoungToOld:
             return b['birthdate'].compareTo(a['birthdate']);
           case SortOption.ageOldToYoung:
@@ -81,9 +81,10 @@ class _ClubPageState extends State<ClubPage> {
   // add a new member to db
   void _newMember() async {
     final memberData = await _createMemberDialog();
-    if (memberData != null && memberData['name']!.isNotEmpty) {
+    if (memberData != null) {
       await DatabaseHelper.instance.addMember(
-        memberData['name']!,
+        memberData['firstname']!,
+        memberData['lastname']!,
         memberData['birthdate']!,
         widget.club['id'],
       );
@@ -92,7 +93,8 @@ class _ClubPageState extends State<ClubPage> {
   }
 
   Future<Map<String, String>?> _createMemberDialog() async {
-    String? memberName;
+    String? memberFirstName;
+    String? memberLastName;
     String? memberBirthdate;
     TextEditingController dateController = TextEditingController();
 
@@ -122,10 +124,19 @@ class _ClubPageState extends State<ClubPage> {
             children: [
               TextField(
                 onChanged: (value) {
-                  memberName = value;
+                  memberFirstName = value;
 
                 },
-                decoration: const InputDecoration(hintText: 'Member name'),
+                decoration: const InputDecoration(hintText: 'First name'),
+                keyboardType: TextInputType.text,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              TextField(
+                onChanged: (value) {
+                  memberLastName = value;
+
+                },
+                decoration: const InputDecoration(hintText: 'Last name'),
                 keyboardType: TextInputType.text,
                 textCapitalization: TextCapitalization.sentences,
               ),
@@ -140,10 +151,11 @@ class _ClubPageState extends State<ClubPage> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                if (memberName != null && memberBirthdate != null) {
+                if (memberFirstName != null && memberLastName != null && memberBirthdate != null) {
                   HapticFeedback.mediumImpact();
                   Navigator.of(context).pop({
-                    'name': memberName!, 
+                    'firstname': memberFirstName!, 
+                    'lastname': memberLastName!, 
                     'birthdate': memberBirthdate!
                   });
                 }
@@ -163,7 +175,7 @@ class _ClubPageState extends State<ClubPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Remove member'),
-          content: Text('Are you sure you want to remove ${member['name']}?'),
+          content: Text('Are you sure you want to remove ${member['firstname']} ${member['lastname']}?'),
           actions: <Widget>[
             TextButton(
               child: const Text('Cancel'),
@@ -315,7 +327,7 @@ class _ClubPageState extends State<ClubPage> {
                         },
                         child:
                           ListTile(
-                            title: Text(member['name']),
+                            title: Text('${member['firstname']} ${member['lastname']}'),
                             subtitle: Text('Age: ${_calculateAge(member['birthdate'])} years'),
                           ),
                       ),

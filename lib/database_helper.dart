@@ -41,7 +41,7 @@ class DatabaseHelper {
   }
 
   Future<void> _onCreate(Database db, int version) async {
-    // creates the clubs table with variables id and name
+    // creates the clubs table
     await db.execute('''
       CREATE TABLE clubs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,7 +59,8 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE members (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
+        firstname TEXT NOT NULL,
+        lastname TEXT NOT NULL,
         birthdate INTEGER,
         clubId INTEGER,
         FOREIGN KEY (clubId) REFERENCES clubs (id) ON DELETE CASCADE 
@@ -118,11 +119,12 @@ class DatabaseHelper {
   }
 
   // add a new member to db
-  Future<int> addMember(String name, String birthdate, int clubId) async {
+  Future<int> addMember(String firstname, String lastname, String birthdate, int clubId) async {
     final db = await database;
     return await db.insert(
       'members',
-      {'name': name, 
+      {'firstname': firstname,
+       'lastname': lastname, 
       'birthdate': birthdate,
       'clubId': clubId},
       conflictAlgorithm: ConflictAlgorithm.replace,
