@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'database_helper.dart';
 import 'club_page.dart';
 
@@ -58,9 +59,12 @@ class _MyHomePageState extends State<MyHomePage> {
         clubData['name']!, 
         clubData['city']!,
         clubData['year']!,
+        clubData['color']!,
+        clubData['secondcolor']!,
         clubData['description']!,
       );
       debugPrint('New club added with ID: $id');
+      debugPrint('Club data: $clubData');
       _loadClubs();
     }
   }
@@ -70,7 +74,61 @@ class _MyHomePageState extends State<MyHomePage> {
     String? clubName;
     String? clubCity;
     String? clubYear;
+    Color clubColor = Colors.blue;
+    Color clubSecondColor = Colors.black;
+    TextEditingController colorController = TextEditingController();
+    TextEditingController colorSecondController = TextEditingController();
     String? clubDescription;
+
+    Future<void> selectColor(BuildContext context, bool isPrimary) async {
+      Color pickedColor = isPrimary ? clubColor : clubSecondColor;
+      await showDialog<Color>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Pick a color'),
+            content: SingleChildScrollView(
+              child: ColorPicker(
+                pickerColor: pickedColor, 
+                onColorChanged: (color){
+                  pickedColor = color;
+                },
+                enableAlpha: false,
+                pickerAreaBorderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  Navigator.of(context).pop();
+                }
+              ),
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  setState((){
+                    if (isPrimary) {
+                      clubColor = pickedColor;
+                      colorController.text = 
+                        '#${clubColor.value.toRadixString(16).substring(2).toUpperCase()}';
+                    }
+                    else {
+                      clubSecondColor = pickedColor;
+                      colorSecondController.text = 
+                        '#${clubSecondColor.value.toRadixString(16).substring(2).toUpperCase()}';
+                    }
+                    HapticFeedback.mediumImpact();
+                    Navigator.of(context).pop();
+                  });
+                } 
+              )
+            ],
+          );
+        },
+      );
+    }
 
     return showDialog<Map<String, String>>(
       context: context,
@@ -105,6 +163,18 @@ class _MyHomePageState extends State<MyHomePage> {
                   keyboardType: TextInputType.number,
                 ),
                 TextField(
+                  controller: colorController,
+                  decoration: const InputDecoration(hintText: 'Primary club color'),
+                  readOnly: true,
+                  onTap: () => selectColor(context, true),
+                ),
+                TextField(
+                  controller: colorSecondController,
+                  decoration: const InputDecoration(hintText: 'Secondary club color'),
+                  readOnly: true,
+                  onTap: () => selectColor(context, false),
+                ),
+                TextField(
                   onChanged: (value) {
                     clubDescription = value;
                   },
@@ -128,6 +198,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     'name': clubName ?? '',
                     'city': clubCity ?? '',
                     'year': clubYear ?? '',
+                    'color': '#${clubColor.value.toRadixString(16).substring(2).toUpperCase()}',
+                    'secondcolor': '#${clubSecondColor.value.toRadixString(16).substring(2).toUpperCase()}',
                     'description': clubDescription ?? '',
                 });
                 }

@@ -48,6 +48,8 @@ class DatabaseHelper {
         name TEXT NOT NULL,
         city TEXT NOT NULL,
         year TEXT NOT NULL,
+        color TEXT NOT NULL,
+        secondcolor TEXT NOT NULL,
         description TEXT NOT NULL
       )
     ''');
@@ -80,13 +82,15 @@ class DatabaseHelper {
   }
 
   // add a new club to db
-  Future<int> addClub(String name, String city, String year, String? description) async {
+  Future<int> addClub(String name, String city, String year, String color, String secondColor,String description) async {
     final db = await database;
     return await db.insert(
       'clubs',
       {'name': name,
        'city': city,
        'year': year,
+       'color': color,
+       'secondcolor': secondColor,
        'description': description
       },
       conflictAlgorithm: ConflictAlgorithm.replace,

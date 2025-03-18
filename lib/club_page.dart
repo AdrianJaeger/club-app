@@ -155,11 +155,22 @@ class _ClubPageState extends State<ClubPage> {
     return age;
   }
 
+  Color hexToColor(String hex){
+    hex = hex.replaceAll('#', '');
+    hex = 'FF$hex'; // adding alpha value (no transparency)
+    return Color(int.parse(hex, radix:16));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.club['name']), // club name as title of page
+        backgroundColor: hexToColor(widget.club['color']),
+        title: Text(
+            widget.club['name'],
+            style: TextStyle(color: hexToColor(widget.club['secondcolor']))
+        ),
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
