@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'database_helper.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'database_helper.dart';
 
 class ClubPage extends StatefulWidget {
   final Map<String, dynamic> club;
@@ -251,6 +252,182 @@ class _ClubPageState extends State<ClubPage> {
     );
   }
 
+  // edit club in database
+  void _editClub() async {
+    final clubData = await _editClubDialog();
+    if (clubData != null) {
+      await DatabaseHelper.instance.editClub(
+        widget.club['id'],
+        clubData['name']!, 
+        clubData['city']!,
+        clubData['year']!,
+        clubData['color']!,
+        clubData['secondcolor']!,
+        clubData['description']!,
+      );
+          // Seite neu laden, indem die aktuelle Instanz durch eine neue ersetzt wird
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ClubPage(club: {
+          'id': widget.club['id'],
+          'name': clubData['name']!,
+          'city': clubData['city']!,
+          'year': clubData['year']!,
+          'color': clubData['color']!,
+          'secondcolor': clubData['secondcolor']!,
+          'description': clubData['description']!,
+        }),
+      ),
+    );
+    }
+  }
+
+  // dialog for editing clubs
+  Future<Map<String, String>?> _editClubDialog() async {
+    // get current values from db
+    TextEditingController clubNameController = TextEditingController(text: widget.club['name']);
+    TextEditingController clubCityController = TextEditingController(text: widget.club['city']);
+    TextEditingController clubYearController = TextEditingController(text: widget.club['year'].toString());
+    TextEditingController clubDescriptionController = TextEditingController(text: widget.club['description'] ?? '');
+    
+    Color clubColor = hexToColor(widget.club['color']);
+    Color clubSecondColor = hexToColor(widget.club['secondcolor']);
+    TextEditingController colorController = TextEditingController(text: widget.club['color']);
+    TextEditingController colorSecondController = TextEditingController(text: widget.club['secondcolor']);
+
+    Future<void> selectColor(BuildContext context, bool isPrimary) async {
+      Color pickedColor = isPrimary ? clubColor : clubSecondColor;
+      await showDialog<Color>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Pick a color'),
+            content: SingleChildScrollView(
+              child: ColorPicker(
+                pickerColor: pickedColor, 
+                onColorChanged: (color){
+                  pickedColor = color;
+                },
+                enableAlpha: false,
+                pickerAreaBorderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  Navigator.of(context).pop();
+                }
+              ),
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  setState((){
+                    if (isPrimary) {
+                      clubColor = pickedColor;
+                      colorController.text = 
+                        '#${clubColor.value.toRadixString(16).substring(2).toUpperCase()}';
+                    }
+                    else {
+                      clubSecondColor = pickedColor;
+                      colorSecondController.text = 
+                        '#${clubSecondColor.value.toRadixString(16).substring(2).toUpperCase()}';
+                    }
+                    HapticFeedback.mediumImpact();
+                    Navigator.of(context).pop();
+                  });
+                } 
+              )
+            ],
+          );
+        },
+      );
+    }
+
+    return showDialog<Map<String, String>>(
+      context: context,
+      builder:(context) {
+        return AlertDialog(
+          title: const Text('Edit club'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: clubNameController,
+                  decoration: const InputDecoration(labelText: 'Club name'),
+                  keyboardType: TextInputType.text,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                TextField(
+                  controller: clubCityController,
+                  decoration: const InputDecoration(labelText: 'City'),
+                  keyboardType: TextInputType.text,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                TextField(
+                  controller: clubYearController,
+                  decoration: const InputDecoration(labelText: 'Founding year'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: colorController,
+                  decoration: const InputDecoration(labelText: 'Primary color'),
+                  readOnly: true,
+                  onTap: () => selectColor(context, true),
+                ),
+                TextField(
+                  controller: colorSecondController,
+                  decoration: const InputDecoration(labelText: 'Secondary color'),
+                  readOnly: true,
+                  onTap: () => selectColor(context, false),
+                ),
+                TextField(
+                  controller: clubDescriptionController,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                  textCapitalization: TextCapitalization.sentences,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
+                  maxLines: null,
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+            TextButton(
+              onPressed: () {
+                if (clubNameController.text.isNotEmpty && 
+                    clubCityController.text.isNotEmpty && 
+                    clubYearController.text.isNotEmpty) {
+                  HapticFeedback.mediumImpact();
+                  Navigator.of(context).pop({
+                    'name': clubNameController.text,
+                    'city': clubCityController.text,
+                    'year': clubYearController.text,
+                    'color': colorController.text,
+                    'secondcolor': colorSecondController.text,
+                    'description': clubDescriptionController.text,
+                });
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   int _calculateAge(String birthdateString) {
     DateTime todayDate = DateTime.now();
     DateTime birthDate = DateTime.parse(birthdateString);
@@ -287,8 +464,19 @@ class _ClubPageState extends State<ClubPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('🏙 City: ${widget.club['city']}', style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('🏙 City: ${widget.club['city']}', style: const TextStyle(fontSize: 18)),
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    _editClub();
+                  }, 
+                ),
+              ],
+            ),
             Text('📅 Founded: ${widget.club['year']}', style: const TextStyle(fontSize: 18)),
             const SizedBox(height: 8),
             Text('👥 Members: $_memberCount', style: const TextStyle(fontSize: 18)),
@@ -305,6 +493,7 @@ class _ClubPageState extends State<ClubPage> {
                 IconButton(
                   icon: const Icon(Icons.sort),
                   onPressed: () {
+                    HapticFeedback.mediumImpact();
                     _sortMemberDialog();
                   }, 
                 ),

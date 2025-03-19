@@ -108,6 +108,24 @@ class DatabaseHelper {
     );
   }
 
+  // edit variables of a club in db
+  Future<int> editClub(int id, String name, String city, String year, String color, String secondColor, String description) async {
+  final db = await database;
+  return await db.update(
+    'clubs',
+    {
+      'name': name,
+      'city': city,
+      'year': year,
+      'color': color,
+      'secondcolor': secondColor,
+      'description': description,
+    },
+    where: 'id = ?',
+    whereArgs: [id],
+  );
+}
+
   // get all members of a specific club
   Future<List<Map<String, dynamic>>> getMembers(int clubId) async {
     final db = await database;

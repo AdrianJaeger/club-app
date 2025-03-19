@@ -74,11 +74,11 @@ class _MyHomePageState extends State<MyHomePage> {
     String? clubName;
     String? clubCity;
     String? clubYear;
+    String? clubDescription;
     Color clubColor = Colors.blue;
     Color clubSecondColor = Colors.black;
     TextEditingController colorController = TextEditingController();
     TextEditingController colorSecondController = TextEditingController();
-    String? clubDescription;
 
     Future<void> selectColor(BuildContext context, bool isPrimary) async {
       Color pickedColor = isPrimary ? clubColor : clubSecondColor;
