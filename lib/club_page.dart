@@ -635,16 +635,13 @@ class _ClubPageState extends State<ClubPage> {
                   final member = _members[index];
                   return Column(
                     children: [
-                      GestureDetector(
+                      ListTile(
+                        title: Text('${member['firstname']} ${member['lastname']}'),
+                        subtitle: Text('Age: ${_calculateAge(member['birthdate'])} years'),
                         onLongPress: () {
                           _removeOrEditDialog(member);
                           HapticFeedback.mediumImpact();
                         },
-                        child:
-                          ListTile(
-                            title: Text('${member['firstname']} ${member['lastname']}'),
-                            subtitle: Text('Age: ${_calculateAge(member['birthdate'])} years'),
-                          ),
                       ),
                       const Divider(),
                     ],

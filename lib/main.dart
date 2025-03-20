@@ -266,29 +266,32 @@ class _MyHomePageState extends State<MyHomePage> {
                 final club = _clubs[index];
                 return Column(
                   children: [
-                    GestureDetector(
-                      onTap: () async {
-                        HapticFeedback.mediumImpact();
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ClubPage(club: club),
-                          )
-                        );
-                        // refreshes the clubs after returning to home, in case a clubs name was edited 
-                        _loadClubs(); 
-                      },
-                      onLongPress: () {
-                        _removeClubDialog(club);
-                        HapticFeedback.mediumImpact();
-                      },
-                      child:
-                        ListTile(
-                        title: Text(_clubs[index]['name']),
-                        subtitle: Text(club['year']),
-                      ),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () async {
+                          HapticFeedback.mediumImpact();
+                          await Future.delayed(const Duration (milliseconds: 100));
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ClubPage(club: club),
+                            )
+                          );
+                          // refreshes the clubs after returning to home, in case a clubs name was edited 
+                          _loadClubs(); 
+                        },
+                        onLongPress: () {
+                          _removeClubDialog(club);
+                          HapticFeedback.mediumImpact();
+                        },
+                        child: ListTile(
+                          title: Text(_clubs[index]['name']),
+                          subtitle: Text(club['year']),
+                        ),
+                      )
                     ),
-                    const Divider(),
+                  const Divider(),
                   ],
                 );
               },
