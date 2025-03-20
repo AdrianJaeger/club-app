@@ -391,21 +391,21 @@ class _ClubPageState extends State<ClubPage> {
         clubData['secondcolor']!,
         clubData['description']!,
       );
-          // Seite neu laden, indem die aktuelle Instanz durch eine neue ersetzt wird
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ClubPage(club: {
-          'id': widget.club['id'],
-          'name': clubData['name']!,
-          'city': clubData['city']!,
-          'year': clubData['year']!,
-          'color': clubData['color']!,
-          'secondcolor': clubData['secondcolor']!,
-          'description': clubData['description']!,
-        }),
-      ),
-    );
+      // reload the club page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ClubPage(club: {
+            'id': widget.club['id'],
+            'name': clubData['name']!,
+            'city': clubData['city']!,
+            'year': clubData['year']!,
+            'color': clubData['color']!,
+            'secondcolor': clubData['secondcolor']!,
+            'description': clubData['description']!,
+          }),
+        ),
+      );
     }
   }
 

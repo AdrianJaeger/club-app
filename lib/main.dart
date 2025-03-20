@@ -267,14 +267,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 return Column(
                   children: [
                     GestureDetector(
-                      onTap: () {
-                        Navigator.push(
+                      onTap: () async {
+                        HapticFeedback.mediumImpact();
+                        await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => ClubPage(club: club),
                           )
                         );
-                        HapticFeedback.mediumImpact();
+                        // refreshes the clubs after returning to home, in case a clubs name was edited 
+                        _loadClubs(); 
                       },
                       onLongPress: () {
                         _removeClubDialog(club);
