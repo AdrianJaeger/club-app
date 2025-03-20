@@ -158,4 +158,19 @@ class DatabaseHelper {
       whereArgs: [id],
     );
   }
+
+    // edit variables of a member in db
+  Future<int> editMember(int memberId, String firstname, String lastname, String birthdate, int clubId) async {
+    final db = await database;
+    return await db.update(
+      'members',
+        {'firstname': firstname,
+        'lastname': lastname, 
+        'birthdate': birthdate,
+        'clubId': clubId},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      where: 'id = ?',
+      whereArgs: [memberId],
+    );
+  }
 }

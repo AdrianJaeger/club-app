@@ -169,6 +169,132 @@ class _ClubPageState extends State<ClubPage> {
     );
   }
 
+  Future<void> _removeOrEditDialog(Map<String, dynamic> member) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('${member['firstname']} ${member['lastname']}'),
+          content: Text('What do you want to do?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // close dialog
+                HapticFeedback.mediumImpact();
+              }
+            ),
+            TextButton(
+              child: const Text('Edit'),
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                Navigator.of(context).pop(); // close dialog
+                _editMember(member);
+              }
+            ),
+            TextButton(
+              child: const Text('Remove'),
+              onPressed: () async {
+                HapticFeedback.mediumImpact();
+                Navigator.of(context).pop(); // close dialog
+                _removeMemberDialog(member);
+              }
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // edit member in database
+  void _editMember(Map<String, dynamic> member) async {
+    final memberData = await _editMemberDialog(member);
+    if (memberData != null) {
+      await DatabaseHelper.instance.editMember(
+        member['id'],
+        memberData['firstname']!,
+        memberData['lastname']!,
+        memberData['birthdate']!,
+        member['clubId'],
+      );
+      _loadMembers(); // reload the member list
+    }
+  }
+
+  Future<Map<String, String>?> _editMemberDialog(Map<String, dynamic> member) async {
+    // create text controllers and pre-fill them with the current member's data
+    TextEditingController firstnameController = TextEditingController(text: member['firstname']);
+    TextEditingController lastnameController = TextEditingController(text: member['lastname']);
+    TextEditingController birthdateController = TextEditingController(text: member['birthdate']);
+    
+    return showDialog<Map<String, String>>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Member'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: firstnameController,
+                decoration: const InputDecoration(labelText: 'First Name'),
+                keyboardType: TextInputType.text,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              TextField(
+                controller: lastnameController,
+                decoration: const InputDecoration(labelText: 'Last Name'),
+                keyboardType: TextInputType.text,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              TextField(
+                controller: birthdateController,
+                decoration: const InputDecoration(labelText: 'Birthdate (YYYY-MM-DD)'),
+                readOnly: true,
+                onTap: () async {
+                  DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime(2000),
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime.now(),
+                  );
+
+                  if (pickedDate != null) {
+                    birthdateController.text = pickedDate.toIso8601String().split('T')[0]; // Format to YYYY-MM-DD
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (firstnameController.text.isNotEmpty &&
+                    lastnameController.text.isNotEmpty &&
+                    birthdateController.text.isNotEmpty) {
+                  HapticFeedback.mediumImpact();
+                  Navigator.of(context).pop({
+                    'firstname': firstnameController.text,
+                    'lastname': lastnameController.text,
+                    'birthdate': birthdateController.text,
+                  });
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // show a dialog to confirm to remove a member
   Future<void> _removeMemberDialog(Map<String, dynamic> member) async {
     return showDialog<void>(
@@ -511,7 +637,7 @@ class _ClubPageState extends State<ClubPage> {
                     children: [
                       GestureDetector(
                         onLongPress: () {
-                          _removeMemberDialog(member);
+                          _removeOrEditDialog(member);
                           HapticFeedback.mediumImpact();
                         },
                         child:
