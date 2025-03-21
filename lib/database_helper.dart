@@ -5,14 +5,11 @@ class DatabaseHelper {
   // private constructor
   DatabaseHelper._init();
 
-  // Singleton-Pattern
-  // this creates the only instance of the database that can get used globally in the whole code
-  // you  can use this in code with DatabaseHelper.instance
+  // this creates the only instance of the database helper that can get used globally in the whole code
+  // use this in code with DatabaseHelper.instance
   static final DatabaseHelper instance = DatabaseHelper._init();
   
-  // static means the variable belongs to the class itself, not to an instance of the class
-  // this way the database stays in the storage and doesnt get opened every single time, a method is called
-  // "?" means _database is either Database or null because we initialize it only later
+  // database stays in storage and doesnt get opened every single time a method is called
   static Database? _database;
 
   // Future means it returns a database but later because opening it takes some time
@@ -22,12 +19,14 @@ class DatabaseHelper {
       return _database!;
     }
     // database doesnt exist yet, call _initDB to create
+    // in case opening the app first time after installing
     else {
       _database = await _initDB('clubs.db'); // await causes that the app doesnt freeze while loading the db
     return _database!;
     }
   }
 
+  // creates a new database
   Future<Database> _initDB(String fileName) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, fileName);
@@ -41,7 +40,7 @@ class DatabaseHelper {
   }
 
   Future<void> _onCreate(Database db, int version) async {
-    // creates the clubs table
+    // creates the clubs table in the existing database
     await db.execute('''
       CREATE TABLE clubs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,6 +67,9 @@ class DatabaseHelper {
     ''');
   }
 
+  // this is used to add columns to an existing database
+  // needed for updates of the app so that the existing 
+  // database works with the new code with more variables in the table
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     /*
     if (oldVersion < 2) {
@@ -82,7 +84,7 @@ class DatabaseHelper {
     return await db.query('clubs');
   }
 
-  // add a new club to db
+  // add a new club with its data to db
   Future<int> addClub(String name, String city, String year, String color, String secondColor,String description) async {
     final db = await database;
     return await db.insert(
@@ -108,7 +110,7 @@ class DatabaseHelper {
     );
   }
 
-  // edit variables of a club in db
+  // edit the data of a club in db
   Future<int> editClub(int id, String name, String city, String year, String color, String secondColor, String description) async {
   final db = await database;
   return await db.update(
@@ -136,7 +138,7 @@ class DatabaseHelper {
     );
   }
 
-  // add a new member to db
+  // add a new member to a specific club to db
   Future<int> addMember(String firstname, String lastname, String birthdate, int clubId) async {
     final db = await database;
     return await db.insert(
@@ -149,7 +151,7 @@ class DatabaseHelper {
     );
   }
 
-  // delete a member from db
+  // delete a member of a club from db
   Future<int> deleteMember(int id) async {
     final db = await database;
     return await db.delete(
@@ -159,7 +161,7 @@ class DatabaseHelper {
     );
   }
 
-    // edit variables of a member in db
+  // edit data of a member of a club in db
   Future<int> editMember(int memberId, String firstname, String lastname, String birthdate, int clubId) async {
     final db = await database;
     return await db.update(

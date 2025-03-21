@@ -33,7 +33,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // variables
   List<Map<String, dynamic>> _clubs = [];
 
   // load existing clubs from db when opening the app
@@ -43,7 +42,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _loadClubs();
   }
 
-  // load clubs in database to show them in list on screen
+  // load clubs from database to show them in list on screen
   void _loadClubs() async {
     final clubs = await DatabaseHelper.instance.getClubs();
     setState(() {
@@ -53,9 +52,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // add a new club to db
   void _newClub() async {
+    // open dialog to enter all the data for the club
     final clubData = await _createClubDialog();
+
+    // clubdata is null if user clicks "cancel" on create club dialog
+    // so this gets only executed after user clicked "create"
     if (clubData != null && clubData['name']!.isNotEmpty) {
-      int id = await DatabaseHelper.instance.addClub(
+      // add new club with entered data to db
+      await DatabaseHelper.instance.addClub(
         clubData['name']!, 
         clubData['city']!,
         clubData['year']!,
@@ -63,13 +67,12 @@ class _MyHomePageState extends State<MyHomePage> {
         clubData['secondcolor']!,
         clubData['description']!,
       );
-      debugPrint('New club added with ID: $id');
-      debugPrint('Club data: $clubData');
+      // refresh list of clubs after adding one to db
       _loadClubs();
     }
   }
 
-  // Dialog for adding clubs
+  // dialog for creating clubs
   Future<Map<String, String>?> _createClubDialog() async {
     String? clubName;
     String? clubCity;
@@ -80,6 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
     TextEditingController colorController = TextEditingController();
     TextEditingController colorSecondController = TextEditingController();
 
+    // this is for selecting the primary and secondary color
     Future<void> selectColor(BuildContext context, bool isPrimary) async {
       Color pickedColor = isPrimary ? clubColor : clubSecondColor;
       await showDialog<Color>(
@@ -98,6 +102,8 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             actions: <Widget>[
+
+              // cancel button, closes color picker window
               TextButton(
                 child: const Text('Cancel'),
                 onPressed: () {
@@ -105,18 +111,25 @@ class _MyHomePageState extends State<MyHomePage> {
                   Navigator.of(context).pop();
                 }
               ),
+
+              // OK button, saves the selected color for create club dialog 
+              // and closes color picker window
               TextButton(
                 child: const Text('OK'),
                 onPressed: () {
                   setState((){
                     if (isPrimary) {
+                      // save the selected club color for db
                       clubColor = pickedColor;
+                      // hex representation of this color for the text field on dialog
                       colorController.text = 
+                        // ignore: deprecated_member_use
                         '#${clubColor.value.toRadixString(16).substring(2).toUpperCase()}';
                     }
                     else {
                       clubSecondColor = pickedColor;
                       colorSecondController.text = 
+                        // ignore: deprecated_member_use
                         '#${clubSecondColor.value.toRadixString(16).substring(2).toUpperCase()}';
                     }
                     HapticFeedback.mediumImpact();
@@ -130,6 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     }
 
+    // this creates the actual dialog window
     return showDialog<Map<String, String>>(
       context: context,
       builder:(context) {
@@ -139,6 +153,8 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+
+                // Text field for club name
                 TextField(
                   onChanged: (value) {
                     clubName = value;
@@ -147,6 +163,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   keyboardType: TextInputType.text,
                   textCapitalization: TextCapitalization.sentences,
                 ),
+
+                // Text field for city of club
                 TextField(
                   onChanged: (value) {
                     clubCity = value;
@@ -155,6 +173,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   keyboardType: TextInputType.text,
                   textCapitalization: TextCapitalization.sentences,
                 ),
+
+                // Text field for founding year of club
                 TextField(
                   onChanged: (value) {
                     clubYear = value;
@@ -162,18 +182,24 @@ class _MyHomePageState extends State<MyHomePage> {
                   decoration: const InputDecoration(hintText: 'Founding year of club'),
                   keyboardType: TextInputType.number,
                 ),
+
+                // Text field for primary color of club
                 TextField(
                   controller: colorController,
                   decoration: const InputDecoration(hintText: 'Primary club color'),
                   readOnly: true,
                   onTap: () => selectColor(context, true),
                 ),
+
+                // Text field for secondary color of club
                 TextField(
                   controller: colorSecondController,
                   decoration: const InputDecoration(hintText: 'Secondary club color'),
                   readOnly: true,
                   onTap: () => selectColor(context, false),
                 ),
+
+                // Text field for club description
                 TextField(
                   onChanged: (value) {
                     clubDescription = value;
@@ -188,23 +214,39 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           actions: <Widget>[
+            // cancel button, closes create club dialog without doing anything
             TextButton(
+              child: const Text('Cancel'),
               onPressed: () {
+                HapticFeedback.mediumImpact();
+                Navigator.of(context).pop();
+              }
+            ),
+
+            // create button
+            TextButton(
+              child: const Text('Create'),
+              onPressed: () {
+                // only works if user selected everything except description
                 if (clubName != null && clubName!.isNotEmpty && 
                     clubCity != null && clubCity!.isNotEmpty &&
-                    clubYear != null && clubYear!.isNotEmpty) {
+                    clubYear != null && clubYear!.isNotEmpty &&
+                    colorController.text.isNotEmpty &&
+                    colorSecondController.text.isNotEmpty) {
+
                   HapticFeedback.mediumImpact();
+
+                  // returns all entered data to _newClub function that creates the club in database
                   Navigator.of(context).pop({
                     'name': clubName ?? '',
                     'city': clubCity ?? '',
                     'year': clubYear ?? '',
-                    'color': '#${clubColor.value.toRadixString(16).substring(2).toUpperCase()}',
-                    'secondcolor': '#${clubSecondColor.value.toRadixString(16).substring(2).toUpperCase()}',
+                    'color': colorController.text,
+                    'secondcolor': colorSecondController.text,
                     'description': clubDescription ?? '',
-                });
+                  });
                 }
               },
-              child: const Text('Create'),
             ),
           ],
         );
@@ -221,22 +263,28 @@ class _MyHomePageState extends State<MyHomePage> {
           title: const Text('Delete club'),
           content: Text('Are you sure you want to delete ${club['name']}?'),
           actions: <Widget>[
+
+            // cancel button, just closes dialog
             TextButton(
               child: const Text('Cancel'),
               onPressed: () {
-                Navigator.of(context).pop(); // close dialog
+                Navigator.of(context).pop();
                 HapticFeedback.mediumImpact();
               }
             ),
+
+            // delete button, deletes club and all its members from db
             TextButton(
               child: const Text('Delete'),
               onPressed: () async {
                 HapticFeedback.mediumImpact();
-                // delete club from db
-                await DatabaseHelper.instance.deleteClub(club['id']);
+                Navigator.of(context).pop(); // close dialog
+
                 // update the clubs list
                 _loadClubs();
-                Navigator.of(context).pop(); // close dialog
+                
+                // delete club from db
+                await DatabaseHelper.instance.deleteClub(club['id']);
               }
             ),
           ],
@@ -259,7 +307,7 @@ class _MyHomePageState extends State<MyHomePage> {
       // list with all existing clubs
       body: Center(
         child: _clubs.isEmpty
-          ? const Text('No clubs exist yet')
+          ? const Text('No clubs exist yet') // if list of clubs is empty, show this text
           : ListView.builder(
               itemCount: _clubs.length,
               itemBuilder: (context, index) {
@@ -269,26 +317,39 @@ class _MyHomePageState extends State<MyHomePage> {
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
+                        // open the club page 
                         onTap: () async {
                           HapticFeedback.mediumImpact();
+                          
+                          // delay for opening club page so that user see click animation
                           await Future.delayed(const Duration (milliseconds: 100));
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ClubPage(club: club),
-                            )
-                          );
-                          // refreshes the clubs after returning to home, in case a clubs name was edited 
-                          _loadClubs(); 
+                          
+                          if (mounted) {
+                            // context is in a mounted check so warning is useless
+                            // ignore: use_build_context_synchronously
+                            await Navigator.push(context, 
+                              MaterialPageRoute(
+                                builder: (context) => ClubPage(club: club),
+                              ),
+                            );
+
+                            // refreshes the clubs after returning to home, in case a clubs data was edited 
+                            _loadClubs();
+                          }
                         },
+
+                        // open dialog for deleting a club from db
                         onLongPress: () {
                           _removeClubDialog(club);
                           HapticFeedback.mediumImpact();
                         },
+
+                        // every club in list shows its name and founding year
                         child: ListTile(
                           title: Text(_clubs[index]['name']),
                           subtitle: Text(club['year']),
                         ),
+
                       )
                     ),
                   const Divider(),
@@ -297,6 +358,7 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ), 
       ),
+
       // button to add new clubs
       floatingActionButton: FloatingActionButton(
         onPressed: () {
